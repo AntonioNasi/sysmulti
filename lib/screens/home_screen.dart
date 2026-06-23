@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'escolas_screen.dart';
+
 
 class HomeScreen extends StatelessWidget {
 
@@ -12,9 +14,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
 
       appBar: AppBar(
-        title: const Text(
-          'Relatório de Visitas',
-        ),
+        title: const Text('Relatório de Visitas'),
       ),
 
 
@@ -26,7 +26,6 @@ class HomeScreen extends StatelessWidget {
 
           mainAxisAlignment: MainAxisAlignment.center,
 
-
           children: [
 
 
@@ -34,47 +33,55 @@ class HomeScreen extends StatelessWidget {
 
               icon: const Icon(Icons.add),
 
-              label: const Text(
-                'Nova Visita',
-              ),
+              label: const Text('Nova Visita'),
 
-              onPressed: () {},
+              onPressed: () {
+                // futuro: tela de nova visita
+              },
 
             ),
 
 
-
             const SizedBox(height: 20),
-
 
 
             ElevatedButton.icon(
 
               icon: const Icon(Icons.school),
 
-              label: const Text(
-                'Escolas',
-              ),
+              label: const Text('Escolas'),
 
-              onPressed: () {},
+              onPressed: () {
+
+                Navigator.push(
+
+                  context,
+
+                  MaterialPageRoute(
+
+                    builder: (_) => const EscolasScreen(),
+
+                  ),
+
+                );
+
+              },
 
             ),
 
 
-
             const SizedBox(height: 20),
-
 
 
             ElevatedButton.icon(
 
               icon: const Icon(Icons.history),
 
-              label: const Text(
-                'Histórico',
-              ),
+              label: const Text('Histórico'),
 
-              onPressed: () {},
+              onPressed: () {
+                // futuro: tela de histórico
+              },
 
             ),
 
