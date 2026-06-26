@@ -2,9 +2,7 @@ name: Build Android App
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -14,7 +12,13 @@ jobs:
     
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -26,22 +30,16 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Analyze Code
+        run: flutter analyze
+        continue-on-error: true
+
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --verbose
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: android-app-apk
+          name: android-app.apk
           path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: warn
-
-      - name: Build App Bundle (AAB)
-        run: flutter build appbundle --release
-
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-app-aab
-          path: build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: warn
