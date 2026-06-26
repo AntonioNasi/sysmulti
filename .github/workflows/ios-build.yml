@@ -10,7 +10,7 @@ on:
 jobs:
   build-ios:
     name: Build iOS
-    runs-on: macos-14  # ← Use macos-14 em vez de macos-latest
+    runs-on: macos-14
     
     steps:
       - name: Checkout Code
@@ -32,18 +32,19 @@ jobs:
           pod install --repo-update
         working-directory: ios
 
+      # ⚠️ Usar build com debug em vez de no-codesign
       - name: Build iOS Debug
-        run: flutter build ios --no-codesign
+        run: flutter build ios --debug
 
-      - name: Generate IPA
+      - name: Create IPA
         run: |
-          mkdir -p build/ios/iphoneos/Runner.app
           mkdir -p Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
           zip -r app.ipa Payload
+          mkdir -p build/ios/iphoneos/
           mv app.ipa build/ios/iphoneos/
 
-      - name: Upload IPA Artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: ios-app-ipa
