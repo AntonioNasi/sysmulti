@@ -77,50 +77,51 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
   }
 
   Future<void> _gerarPDF(Atividade atividade) async {
-    try {
-      final escola = await DatabaseHelper.instance.getEscolaById(
-        escolaSelecionada!.id!,
-      );
+  try {
+    final escola = await DatabaseHelper.instance.getEscolaById(
+      escolaSelecionada!.id!,
+    );
 
-      if (escola == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro ao carregar dados para o PDF'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      // Criar um técnico temporário com os dados do membro da equipe
-      final tecnico = Tecnico(
-        id: null,
-        nome: membroEquipeSelecionado!.nome,
-        nomeCompleto: membroEquipeSelecionado!.nomeCompleto,
-        assinatura: membroEquipeSelecionado!.assinatura,
-      );
-
-      final pdfBytes = await PdfService.gerarPdfAtividade(
-        atividade: atividade,
-        escola: escola,
-        tecnico: tecnico,
-      );
-
-      await Printing.sharePdf(
-        bytes: pdfBytes,
-        filename: 'atividade_${escola.nome.replaceAll(' ', '_')}.pdf',
-      );
-    } catch (e) {
+    if (escola == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao gerar PDF: $e'),
+        const SnackBar(
+          content: Text('Erro ao carregar dados para o PDF'),
           backgroundColor: Colors.red,
         ),
       );
+      return;
     }
+
+    // Criar um técnico temporário com os dados do membro da equipe
+    final tecnico = Tecnico(
+      id: null,
+      nome: membroEquipeSelecionado!.nome,
+      nomeCompleto: membroEquipeSelecionado!.nomeCompleto,
+      assinatura: membroEquipeSelecionado!.assinatura,
+      cargo: membroEquipeSelecionado!.cargo, // ADICIONAR CARGO
+    );
+
+    final pdfBytes = await PdfService.gerarPdfAtividade(
+      atividade: atividade,
+      escola: escola,
+      tecnico: tecnico,
+    );
+
+    await Printing.sharePdf(
+      bytes: pdfBytes,
+      filename: 'atividade_${escola.nome.replaceAll(' ', '_')}.pdf',
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Erro ao gerar PDF: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
   Future<void> salvarAtividade() async {
     // Validar formulário

@@ -32,6 +32,10 @@ class PdfService {
     // Carregar logos
     final logoSecretaria = await _loadImage('assets/logo_secretaria.png');
     final logoEquipe = await _loadImage('assets/logo_equipe.png');
+    
+    // Carregar imagens adicionais
+    final imagemCabecalho = await _loadImage('assets/imagens/cabecalho.png');
+    final imagemRodape = await _loadImage('assets/imagens/rodape.png');
 
     // Decodificar dados da atividade
     Map<String, dynamic> dados;
@@ -46,6 +50,24 @@ class PdfService {
     camposParaExibir.remove('membroEquipe');
     camposParaExibir.remove('membroEquipeAssinatura');
 
+    // Carregar a assinatura do membro da equipe
+    String assinaturaPath = dados['membroEquipeAssinatura'] ?? tecnico.assinatura;
+    pw.MemoryImage? assinaturaMembro;
+    if (assinaturaPath.isNotEmpty) {
+      assinaturaMembro = await _loadImage(assinaturaPath);
+    }
+
+    // Carregar assinatura do responsável
+    pw.MemoryImage? assinaturaResponsavel;
+    if (atividade.assinaturaEscola != null && atividade.assinaturaEscola!.isNotEmpty) {
+      try {
+        final bytes = base64Decode(atividade.assinaturaEscola!);
+        assinaturaResponsavel = pw.MemoryImage(bytes);
+      } catch (e) {
+        // Se falhar, ignora
+      }
+    }
+
     pdf.addPage(
       pw.Page(
         margin: pw.EdgeInsets.all(margin),
@@ -54,6 +76,19 @@ class PdfService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              // ===== IMAGEM DO CABEÇALHO =====
+              if (imagemCabecalho != null)
+                pw.Center(
+                  child: pw.Image(
+                    imagemCabecalho,
+                    width: 300,
+                    height: 60,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+              
+              pw.SizedBox(height: 10),
+              
               // ===== CABEÇALHO =====
               _buildHeader(logoSecretaria, logoEquipe),
               
@@ -75,9 +110,28 @@ class PdfService {
               pw.SizedBox(height: 30),
               
               // ===== ASSINATURAS EM DUAS COLUNAS =====
-              _buildAssinaturas(atividade, tecnico, dados),
+              _buildAssinaturas(
+                atividade: atividade,
+                tecnico: tecnico,
+                dados: dados,
+                assinaturaMembro: assinaturaMembro,
+                assinaturaResponsavel: assinaturaResponsavel,
+              ),
               
               pw.SizedBox(height: 20),
+              
+              // ===== IMAGEM DO RODAPÉ =====
+              if (imagemRodape != null)
+                pw.Center(
+                  child: pw.Image(
+                    imagemRodape,
+                    width: 200,
+                    height: 60,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+              
+              pw.SizedBox(height: 10),
               
               // ===== RODAPÉ =====
               _buildFooter(),
@@ -96,16 +150,7 @@ class PdfService {
       final byteData = await rootBundle.load(path);
       return pw.MemoryImage(byteData.buffer.asUint8List());
     } catch (e) {
-      return null;
-    }
-  }
-
-  /// Carrega a imagem de assinatura do membro da equipe
-  static Future<pw.MemoryImage?> _loadAssinatura(String path) async {
-    try {
-      final byteData = await rootBundle.load(path);
-      return pw.MemoryImage(byteData.buffer.asUint8List());
-    } catch (e) {
+      print('Erro ao carregar imagem: $path - $e');
       return null;
     }
   }
@@ -254,10 +299,18 @@ class PdfService {
   }
 
   /// Constrói as assinaturas em duas colunas
-  static pw.Widget _buildAssinaturas(Atividade atividade, Tecnico tecnico, Map<String, dynamic> dados) {
+  static pw.Widget _buildAssinaturas({
+    required Atividade atividade,
+    required Tecnico tecnico,
+    required Map<String, dynamic> dados,
+    required pw.MemoryImage? assinaturaMembro,
+    required pw.MemoryImage? assinaturaResponsavel,
+  }) {
     // Nome do membro da equipe
     String nomeMembroEquipe = dados['membroEquipe'] ?? tecnico.nomeCompleto;
-    String assinaturaMembroPath = dados['membroEquipeAssinatura'] ?? tecnico.assinatura;
+    
+    // Cargo do membro da equipe
+    String cargoMembroEquipe = tecnico.cargo;
     
     // Nome do responsável da escola
     String nomeResponsavel = atividade.nomeResponsavelAssinatura ?? 'Responsável não informado';
@@ -294,7 +347,7 @@ class PdfService {
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
                   // Assinatura do membro da equipe (imagem)
-                  _buildAssinaturaImagem(assinaturaMembroPath),
+                  _buildAssinaturaMembroWidget(assinaturaMembro),
                   
                   pw.SizedBox(height: 8),
                   
@@ -310,12 +363,14 @@ class PdfService {
                   
                   pw.SizedBox(height: 4),
                   
+                  // Cargo do membro da equipe
                   pw.Text(
-                    'Membro da Equipe',
+                    cargoMembroEquipe.isNotEmpty ? cargoMembroEquipe : 'Membro da Equipe',
                     style: pw.TextStyle(
                       fontSize: 10,
                       color: PdfColors.grey,
                     ),
+                    textAlign: pw.TextAlign.center,
                   ),
                 ],
               ),
@@ -329,7 +384,7 @@ class PdfService {
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
                   // Assinatura do responsável (capturada na tela)
-                  _buildAssinaturaResponsavel(atividade.assinaturaEscola),
+                  _buildAssinaturaResponsavelWidget(assinaturaResponsavel),
                   
                   pw.SizedBox(height: 8),
                   
@@ -351,6 +406,7 @@ class PdfService {
                       fontSize: 10,
                       color: PdfColors.grey,
                     ),
+                    textAlign: pw.TextAlign.center,
                   ),
                 ],
               ),
@@ -364,9 +420,9 @@ class PdfService {
     );
   }
 
-  /// Constrói a imagem da assinatura do membro da equipe
-  static pw.Widget _buildAssinaturaImagem(String path) {
-    if (path.isEmpty) {
+  /// Constrói o widget da assinatura do membro da equipe
+  static pw.Widget _buildAssinaturaMembroWidget(pw.MemoryImage? assinatura) {
+    if (assinatura != null) {
       return pw.Container(
         width: 180,
         height: 50,
@@ -379,44 +435,14 @@ class PdfService {
           ),
         ),
         child: pw.Center(
-          child: pw.Text(
-            '(Assinatura não disponível)',
-            style: pw.TextStyle(
-              fontSize: 10,
-              color: PdfColors.grey,
-            ),
+          child: pw.Image(
+            assinatura,
+            width: 160,
+            height: 40,
+            fit: pw.BoxFit.contain,
           ),
         ),
       );
-    }
-
-    // Carregar a imagem de forma síncrona para o PDF
-    try {
-      final image = _loadAssinaturaSync(path);
-      if (image != null) {
-        return pw.Container(
-          width: 180,
-          height: 50,
-          decoration: pw.BoxDecoration(
-            border: pw.Border(
-              bottom: pw.BorderSide(
-                color: PdfColors.black,
-                width: 1,
-              ),
-            ),
-          ),
-          child: pw.Center(
-            child: pw.Image(
-              image,
-              width: 160,
-              height: 40,
-              fit: pw.BoxFit.contain,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      // Fallback se não carregar
     }
 
     return pw.Container(
@@ -432,7 +458,7 @@ class PdfService {
       ),
       child: pw.Center(
         child: pw.Text(
-          '(Assinatura não carregada)',
+          '(Assinatura não disponível)',
           style: pw.TextStyle(
             fontSize: 10,
             color: PdfColors.grey,
@@ -442,45 +468,9 @@ class PdfService {
     );
   }
 
-  /// Carrega assinatura de forma síncrona (versão simplificada)
-  static pw.MemoryImage? _loadAssinaturaSync(String path) {
-    try {
-      // Para o PDF, usamos uma abordagem diferente - carregamos a imagem
-      // como um asset e a convertemos para MemoryImage
-      return null; // Será carregado de forma assíncrona na geração do PDF
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Constrói a assinatura do responsável capturada na tela
-  static pw.Widget _buildAssinaturaResponsavel(String? assinaturaBase64) {
-    if (assinaturaBase64 == null || assinaturaBase64.isEmpty) {
-      return pw.Container(
-        width: 180,
-        height: 50,
-        decoration: pw.BoxDecoration(
-          border: pw.Border(
-            bottom: pw.BorderSide(
-              color: PdfColors.black,
-              width: 1,
-            ),
-          ),
-        ),
-        child: pw.Center(
-          child: pw.Text(
-            '(Assinatura não capturada)',
-            style: pw.TextStyle(
-              fontSize: 10,
-              color: PdfColors.grey,
-            ),
-          ),
-        ),
-      );
-    }
-
-    try {
-      final bytes = base64Decode(assinaturaBase64);
+  /// Constrói o widget da assinatura do responsável
+  static pw.Widget _buildAssinaturaResponsavelWidget(pw.MemoryImage? assinatura) {
+    if (assinatura != null) {
       return pw.Container(
         width: 180,
         height: 50,
@@ -494,42 +484,42 @@ class PdfService {
         ),
         child: pw.Center(
           child: pw.Image(
-            pw.MemoryImage(bytes),
+            assinatura,
             width: 160,
             height: 40,
             fit: pw.BoxFit.contain,
           ),
         ),
       );
-    } catch (e) {
-      return pw.Container(
-        width: 180,
-        height: 50,
-        decoration: pw.BoxDecoration(
-          border: pw.Border(
-            bottom: pw.BorderSide(
-              color: PdfColors.black,
-              width: 1,
-            ),
-          ),
-        ),
-        child: pw.Center(
-          child: pw.Text(
-            '(Erro ao carregar assinatura)',
-            style: pw.TextStyle(
-              fontSize: 10,
-              color: PdfColors.grey,
-            ),
-          ),
-        ),
-      );
     }
+
+    return pw.Container(
+      width: 180,
+      height: 50,
+      decoration: pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(
+            color: PdfColors.black,
+            width: 1,
+          ),
+        ),
+      ),
+      child: pw.Center(
+        child: pw.Text(
+          '(Assinatura não capturada)',
+          style: pw.TextStyle(
+            fontSize: 10,
+            color: PdfColors.grey,
+          ),
+        ),
+      ),
+    );
   }
 
   /// Rodapé com SysMulti e versão
   static pw.Widget _buildFooter() {
     return pw.Container(
-      margin: pw.EdgeInsets.only(top: 30),
+      margin: pw.EdgeInsets.only(top: 10),
       child: pw.Column(
         children: [
           pw.Divider(thickness: 1),

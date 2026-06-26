@@ -245,18 +245,18 @@ class DatabaseHelper {
   }
 
   Future<List<Map<String, dynamic>>> listarAtividadesCompleto() async {
-    final db = await instance.database;
-    return await db.rawQuery('''
-      SELECT 
-        a.*,
-        e.nome as escola_nome,
-        e.diretor as escola_diretor,
-        t.nome as tecnico_nome,
-        t.cargo as tecnico_cargo
-      FROM atividades a
-      INNER JOIN escolas e ON a.escolaId = e.id
-      INNER JOIN tecnicos t ON a.tecnicoId = t.id
-      ORDER BY a.data DESC
-    ''');
+  final db = await instance.database;
+  return await db.rawQuery('''
+    SELECT 
+      a.*,
+      e.nome as escola_nome,
+      e.diretor as escola_diretor,
+      t.nome as tecnico_nome,
+      t.cargo as tecnico_cargo
+    FROM atividades a
+    INNER JOIN escolas e ON a.escolaId = e.id
+    LEFT JOIN tecnicos t ON a.tecnicoId = t.id
+    ORDER BY a.data DESC
+  ''');
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'escolas_screen.dart';
 import 'nova_atividade_screen.dart';
+import 'historico_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -73,7 +74,12 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(Icons.history),
                 label: const Text('Histórico'),
                 onPressed: () {
-                  // futuro: tela de histórico
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const HistoricoScreen(),
+                    ),
+                  );
                 },
               ),
             ),

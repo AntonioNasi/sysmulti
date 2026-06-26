@@ -1,28 +1,64 @@
 class EscolasPadrao {
   static const List<Map<String, String>> escolas = [
     {
-      'nome': 'EMEI José Martins de Oliveira',
-      'diretor': 'Maria José Santos',
+      'nome': 'EEF Fernando Cavalcante Mota',
+      'diretor': 'Edna Cavalcante Souza',
     },
     {
-      'nome': 'EEF Maria do Carmo Ribeiro',
-      'diretor': 'Francisco Lima',
+      'nome': 'EEF Marieta Cals',
+      'diretor': 'Adriana Alves Pereira de Sousa',
     },
     {
-      'nome': 'EEF Joaquim Alves de Souza',
-      'diretor': 'Ana Paula Silva',
+      'nome': 'EEF CEL. Francisco Nunes Cavalcante',
+      'diretor': 'Luzia Alves da Silva',
     },
     {
-      'nome': 'EMEI Tereza Cristina Alves',
-      'diretor': 'José Carlos Pereira',
+      'nome': 'EEF José Saraiva Sobrinho',
+      'diretor': 'Cristiana Gomes de Oliveira',
     },
     {
-      'nome': 'EEF Raimundo Nonato de Oliveira',
-      'diretor': 'Antônia Rodrigues',
+      'nome': 'EEF Raimundo Alves Cassemiro',
+      'diretor': 'Tiago Matheus de Souza',
     },
     {
-      'nome': 'EMEI Francisco de Assis',
-      'diretor': 'Pedro Henrique Costa',
+      'nome': 'EEF José Cavalcante Romano',
+      'diretor': 'Carlos André Távora Santiago',
+    },
+    {
+      'nome': 'EEF Padre José de Anchieta',
+      'diretor': 'Francisca Nascimento de Freitas',
+    },
+    {
+      'nome': 'EEF Nossa Senhora de Lourdes',
+      'diretor': 'Bernardo Rodrigues de Albuquerque',
+    },
+    {
+      'nome': 'EEF Maria de Lourdes Esteves Barbosa',
+      'diretor': 'Francisca Aline Pereira da Silva',
+    },
+    {
+      'nome': 'EEF Jorge Furtado Leite 04',
+      'diretor': 'Francisco Everardo S. da Costa',
+    },
+    {
+      'nome': 'CEI Ângela Cristina Albuquerque',
+      'diretor': 'Helena Alves da Silva',
+    },
+    {
+      'nome': 'Creche Terezinha Lima Freitas',
+      'diretor': 'Marciana Leonardo da Silva',
+    },
+    {
+      'nome': 'CEI Cláudia Matos Maciel',
+      'diretor': 'Ângela de Aguiar da Silva',
+    },
+    {
+      'nome': 'CEI Maria Antonieta Santos',
+      'diretor': 'Priscila Ferreira Vasconcelos',
+    },
+    {
+      'nome': 'Creche Jorge Furtado Leite 02',
+      'diretor': 'Francisco Evelino Martins',
     },
   ];
 }
