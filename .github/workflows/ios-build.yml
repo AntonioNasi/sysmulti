@@ -18,7 +18,7 @@ jobs:
     steps:
       # 1. Checkout do código
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2. Configurar Flutter
       - name: Setup Flutter
@@ -55,7 +55,7 @@ jobs:
 
       # 7. Upload do Artefato
       - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-app-ipa
           path: build/ios/iphoneos/app.ipa
