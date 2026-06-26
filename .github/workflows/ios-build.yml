@@ -1,42 +1,69 @@
-name: Build iOS App
+name: Build Flutter App
 
 on:
   push:
     branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: macos-14
+  # ===== ANDROID =====
+  build-android:
+    name: Android
+    runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: subosito/flutter-action@v2
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.16.0'
           channel: 'stable'
-          
-      - run: flutter pub get
-      
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-app.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  # ===== iOS =====
+  build-ios:
+    name: iOS
+    runs-on: macos-14
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.0'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
       - name: Install CocoaPods
         run: |
           sudo gem install cocoapods
-          pod install
+          pod install --repo-update
         working-directory: ios
-      
-      # Build para simulator (mais rápido e não precisa de codesign)
-      - name: Build for Simulator
-        run: flutter build ios --simulator
-      
-      # Ou build para dispositivo (precisa de codesign)
-      - name: Build for Device
-        run: flutter build ios --release --no-codesign
-        continue-on-error: true  # ← Continua mesmo se falhar
-      
-      - name: Upload Build
-        uses: actions/upload-artifact@v4
+
+      - name: Build iOS (Simulator)
+        run: flutter build ios --simulator --release
+
+      - name: Upload iOS Build
+        uses: actions/upload-artifact@v3
         with:
-          name: ios-build
-          path: build/ios/iphoneos/
-          if-no-files-found: warn
+          name: ios-simulator-build
+          path: build/ios/iphonesimulator/
