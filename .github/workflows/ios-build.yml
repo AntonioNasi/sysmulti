@@ -5,46 +5,36 @@ on:
     branches:
       - main
       - master
-  pull_request:
-    branches:
-      - main
-      - master
+  workflow_dispatch:
 
 jobs:
   build-ios:
     name: Build iOS
-    runs-on: macos-latest  # Necessário para compilar iOS
+    runs-on: macos-14  # ← Use macos-14 em vez de macos-latest
     
     steps:
-      # 1. Checkout do código
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Configurar Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.0'  # Use a versão do seu projeto
+          flutter-version: '3.16.0'
           channel: 'stable'
           cache: true
 
-      # 3. Instalar dependências
       - name: Install Flutter Dependencies
         run: flutter pub get
 
-      # 4. Instalar CocoaPods
       - name: Install CocoaPods
         run: |
           sudo gem install cocoapods
           pod install --repo-update
         working-directory: ios
 
-      # 5. Build para iOS (Debug)
       - name: Build iOS Debug
-        run: |
-          flutter build ios --no-codesign
+        run: flutter build ios --no-codesign
 
-      # 6. Gerar IPA
       - name: Generate IPA
         run: |
           mkdir -p build/ios/iphoneos/Runner.app
@@ -53,9 +43,9 @@ jobs:
           zip -r app.ipa Payload
           mv app.ipa build/ios/iphoneos/
 
-      # 7. Upload do Artefato
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-app-ipa
           path: build/ios/iphoneos/app.ipa
+          if-no-files-found: warn
