@@ -256,46 +256,53 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
   }
 
   Widget construirCampos() {
-    // Se não houver tipo selecionado, retorna vazio
-    if (tipoSelecionado == null || tipoSelecionado!.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final atividade = tiposAtividade.firstWhere(
-      (item) => item["nome"] == tipoSelecionado,
-      orElse: () => {"nome": "", "campos": []},
-    );
-
-    final List<dynamic> campos = atividade["campos"] ?? [];
-
-    if (campos.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      children: campos.map<Widget>((campo) {
-        final campoNome = campo.toString();
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: TextFormField(
-            decoration: InputDecoration(
-              labelText: campoNome,
-              border: const OutlineInputBorder(),
-            ),
-            onChanged: (valor) {
-              dados[campoNome] = valor;
-            },
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Preencha o campo $campoNome';
-              }
-              return null;
-            },
-          ),
-        );
-      }).toList(),
-    );
+  // Se não houver tipo selecionado, retorna vazio
+  if (tipoSelecionado == null || tipoSelecionado!.isEmpty) {
+    return const SizedBox.shrink();
   }
+
+  final atividade = tiposAtividade.firstWhere(
+    (item) => item["nome"] == tipoSelecionado,
+    orElse: () => {"nome": "", "campos": []},
+  );
+
+  final List<dynamic> campos = atividade["campos"] ?? [];
+
+  if (campos.isEmpty) {
+    return const SizedBox.shrink();
+  }
+
+  return Column(
+    children: campos.map<Widget>((campo) {
+      final campoNome = campo.toString();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextFormField(
+          maxLines: null, // ← PERMITE MÚLTIPLAS LINHAS
+          minLines: 1,    // ← COMEÇA COM 1 LINHA
+          keyboardType: TextInputType.multiline, // ← HABILITA QUEBRA DE LINHA
+          textInputAction: TextInputAction.newline, // ← BOTÃO "ENTER" PARA QUEBRA
+          decoration: InputDecoration(
+            labelText: campoNome,
+            border: const OutlineInputBorder(),
+            // Opcional: adicionar um fundo para melhor visualização
+            filled: true,
+            fillColor: Colors.white,
+          ),
+          onChanged: (valor) {
+            dados[campoNome] = valor;
+          },
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Preencha o campo $campoNome';
+            }
+            return null;
+          },
+        ),
+      );
+    }).toList(),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -455,7 +462,7 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
                   onPressed: abrirAssinatura,
                   icon: Icon(
                     assinaturaEscola == null ? Icons.edit : Icons.check_circle,
-                    color: assinaturaEscola == null ? null : Colors.green,
+                    color: assinaturaEscola == null ? null : Colors.white,
                   ),
                   label: Text(
                     assinaturaEscola == null
@@ -464,9 +471,10 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
                   ),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
+                    foregroundColor: Colors.white,
                     backgroundColor: assinaturaEscola == null
-                        ? null
-                        : Colors.green.shade50,
+                        ? Colors.teal
+                        : Colors.green,
                   ),
                 ),
 
@@ -478,9 +486,11 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
                   child: ElevatedButton(
                     onPressed: salvarAtividade,
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(100),
                       ),
                     ),
                     child: const Text(

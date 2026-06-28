@@ -13,7 +13,7 @@ class HomeScreen extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           child: Image.asset(
-            'assets/icon/app_icon.png', // Caminho do ícone
+            'assets/icon/app_icon.png',
             width: 40,
             height: 40,
             fit: BoxFit.contain,
@@ -24,63 +24,116 @@ class HomeScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: Container(
+        // ===== IMAGEM DE FUNDO =====
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/imagens/sme_foto.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.white.withOpacity(0.2), // ← Ajuste a opacidade (0.0 a 1.0)
+              BlendMode.dstATop, // Mantém a forma da imagem com transparência
+            ),
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Botão 1 - Nova Atividade
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.assignment_add),
-                label: const Text('Nova Atividade'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const NovaAtividadeScreen(),
+            const Spacer(flex: 1),
+            
+            // Botões
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.assignment_add),
+                      label: const Text('Nova Atividade'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NovaAtividadeScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.school),
+                      label: const Text('Escolas'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EscolasScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.history),
+                      label: const Text('Histórico'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HistoricoScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
             
-            const SizedBox(height: 20),
+            const Spacer(flex: 1),
             
-            // Botão 2 - Escolas
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.school),
-                label: const Text('Escolas'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const EscolasScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Botão 3 - Histórico
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.history),
-                label: const Text('Histórico'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const HistoricoScreen(),
-                    ),
-                  );
-                },
+            // ===== TEXTO "Desenvolvido por GXN Tecnologia" =====
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Text(
+                'Desenvolvido por GXN Tecnologia',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w400,
+                ),
+                textAlign: TextAlign.center,
               ),
             ),
           ],
