@@ -59,7 +59,25 @@ final List<Map<String, dynamic>> tiposAtividade = [
 
       "Demanda apresentada",
 
+      "Procedimentos",
+
       "Sugestões/Encaminhamentos"
+
+    ]
+
+  },
+
+
+  {
+    "nome": "Protocolo de entrega de documento",
+
+    "campos": [
+
+      "Identificação do documento",
+
+      "Responsável pela emissão",
+
+      "Vínculo com o aluno"
 
     ]
 
@@ -78,6 +96,22 @@ final List<Map<String, dynamic>> tiposAtividade = [
       "Resumo",
 
       "Deliberações/Encaminhamentos"
+
+    ]
+
+  },
+
+
+  {
+    "nome": "Atividade externa",
+
+    "campos": [
+
+      "Nome da atividade",
+
+      "Local",
+
+      "Resumo"
 
     ]
 

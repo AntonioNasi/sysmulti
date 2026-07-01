@@ -1,3 +1,4 @@
+// lib/services/pdf_service.dart
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:pdf/pdf.dart';
@@ -23,140 +24,134 @@ class PdfService {
 
   /// Gera o PDF da atividade com o layout especificado
   static Future<Uint8List> gerarPdfAtividade({
-  required Atividade atividade,
-  required Escola escola,
-  required Tecnico tecnico,
-}) async {
-  final pdf = pw.Document();
+    required Atividade atividade,
+    required Escola escola,
+    required Tecnico tecnico,
+  }) async {
+    final pdf = pw.Document();
 
-  // Carregar logos
-  final logoSecretaria = await _loadImage('assets/logo_secretaria.png');
-  final logoEquipe = await _loadImage('assets/logo_equipe.png');
-  
-  // Carregar imagens adicionais
-  final imagemCabecalho = await _loadImage('assets/imagens/cabecalho.png');
-  final imagemRodape = await _loadImage('assets/imagens/rodape.png');
+    // Carregar logos
+    final logoSecretaria = await _loadImage('assets/logo_secretaria.png');
+    final logoEquipe = await _loadImage('assets/logo_equipe.png');
+    
+    // Carregar imagens adicionais
+    final imagemCabecalho = await _loadImage('assets/imagens/cabecalho.png');
+    final imagemRodape = await _loadImage('assets/imagens/rodape.png');
 
-  // Decodificar dados da atividade
-  Map<String, dynamic> dados;
-  try {
-    dados = jsonDecode(atividade.dados);
-  } catch (e) {
-    dados = {};
-  }
-
-  // Remover campos internos dos dados para não aparecerem no PDF
-  final camposParaExibir = Map<String, dynamic>.from(dados);
-  camposParaExibir.remove('membroEquipe');
-  camposParaExibir.remove('membroEquipeAssinatura');
-
-  // Carregar a assinatura do membro da equipe
-  String assinaturaPath = dados['membroEquipeAssinatura'] ?? tecnico.assinatura;
-  pw.MemoryImage? assinaturaMembro;
-  if (assinaturaPath.isNotEmpty) {
-    assinaturaMembro = await _loadImage(assinaturaPath);
-  }
-
-  // Carregar assinatura do responsável
-  pw.MemoryImage? assinaturaResponsavel;
-  if (atividade.assinaturaEscola != null && atividade.assinaturaEscola!.isNotEmpty) {
+    // Decodificar dados da atividade
+    Map<String, dynamic> dados;
     try {
-      final bytes = base64Decode(atividade.assinaturaEscola!);
-      assinaturaResponsavel = pw.MemoryImage(bytes);
+      dados = jsonDecode(atividade.dados);
     } catch (e) {
-      // Se falhar, ignora
+      dados = {};
     }
-  }
 
-  // ===== CONSTRUIR LISTA DE WIDGETS =====
-  // Todos os widgets que serão distribuídos pelas páginas
-  final List<pw.Widget> widgets = [];
+    // Remover campos internos dos dados para não aparecerem no PDF
+    final camposParaExibir = Map<String, dynamic>.from(dados);
+    camposParaExibir.remove('membroEquipe');
+    camposParaExibir.remove('membroEquipeAssinatura');
 
-  // Adicionar widgets do cabeçalho
-  if (imagemCabecalho != null) {
-    widgets.add(pw.Center(
-      child: pw.Image(
-        imagemCabecalho,
-        width: 300,
-        height: 60,
-        fit: pw.BoxFit.contain,
-      ),
-    ));
+    // Carregar a assinatura do membro da equipe
+    String assinaturaPath = dados['membroEquipeAssinatura'] ?? tecnico.assinatura;
+    pw.MemoryImage? assinaturaMembro;
+    if (assinaturaPath.isNotEmpty) {
+      assinaturaMembro = await _loadImage(assinaturaPath);
+    }
+
+    // Carregar assinatura do responsável
+    pw.MemoryImage? assinaturaResponsavel;
+    if (atividade.assinaturaEscola != null && atividade.assinaturaEscola!.isNotEmpty) {
+      try {
+        final bytes = base64Decode(atividade.assinaturaEscola!);
+        assinaturaResponsavel = pw.MemoryImage(bytes);
+      } catch (e) {
+        // Se falhar, ignora
+      }
+    }
+
+    // ===== CONSTRUIR LISTA DE WIDGETS =====
+    final List<pw.Widget> widgets = [];
+
+    // Adicionar widgets do cabeçalho
+    if (imagemCabecalho != null) {
+      widgets.add(pw.Center(
+        child: pw.Image(
+          imagemCabecalho,
+          width: 300,
+          height: 60,
+          fit: pw.BoxFit.contain,
+        ),
+      ));
+      widgets.add(pw.SizedBox(height: 10));
+    }
+
+    // Adicionar cabeçalho
+    widgets.add(_buildHeader(logoSecretaria, logoEquipe));
     widgets.add(pw.SizedBox(height: 10));
-  }
 
-  // Adicionar cabeçalho
-  widgets.add(_buildHeader(logoSecretaria, logoEquipe));
-  widgets.add(pw.SizedBox(height: 10));
+    // Adicionar título
+    widgets.add(_buildTitle());
+    widgets.add(pw.SizedBox(height: 20));
 
-  // Adicionar título
-  widgets.add(_buildTitle());
-  widgets.add(pw.SizedBox(height: 20));
+    // Adicionar informações da escola
+    widgets.add(_buildEscolaInfo(escola, atividade.tipo));
+    widgets.add(pw.SizedBox(height: 20));
 
-  // Adicionar informações da escola
-  widgets.add(_buildEscolaInfo(escola));
-  widgets.add(pw.SizedBox(height: 20));
+    // Adicionar campos da atividade
+    widgets.add(_buildCamposAtividade(atividade, camposParaExibir));
+    widgets.add(pw.SizedBox(height: 30));
 
-  // Adicionar campos da atividade
-  widgets.add(_buildCamposAtividade(atividade, camposParaExibir));
-  widgets.add(pw.SizedBox(height: 30));
-
-  // Adicionar assinaturas
-  widgets.add(_buildAssinaturas(
-    atividade: atividade,
-    tecnico: tecnico,
-    dados: dados,
-    assinaturaMembro: assinaturaMembro,
-    assinaturaResponsavel: assinaturaResponsavel,
-  ));
-
-  widgets.add(pw.SizedBox(height: 20));
-
-  // Adicionar rodapé (imagem + texto)
-  if (imagemRodape != null) {
-    widgets.add(pw.Center(
-      child: pw.Image(
-        imagemRodape,
-        width: 200,
-        height: 60,
-        fit: pw.BoxFit.contain,
-      ),
+    // Adicionar assinaturas
+    widgets.add(_buildAssinaturas(
+      atividade: atividade,
+      tecnico: tecnico,
+      dados: dados,
+      assinaturaMembro: assinaturaMembro,
+      assinaturaResponsavel: assinaturaResponsavel,
     ));
-    widgets.add(pw.SizedBox(height: 10));
+
+    widgets.add(pw.SizedBox(height: 20));
+
+    // Adicionar rodapé (imagem + texto)
+    if (imagemRodape != null) {
+      widgets.add(pw.Center(
+        child: pw.Image(
+          imagemRodape,
+          width: 200,
+          height: 60,
+          fit: pw.BoxFit.contain,
+        ),
+      ));
+      widgets.add(pw.SizedBox(height: 10));
+    }
+
+    widgets.add(_buildFooter());
+
+    // ===== CRIAR PÁGINAS COM MultiPage =====
+    pdf.addPage(
+      pw.MultiPage(
+        margin: pw.EdgeInsets.all(margin),
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return widgets;
+        },
+      ),
+    );
+
+    return await pdf.save();
   }
-
-  widgets.add(_buildFooter());
-
-  // ===== CRIAR PÁGINAS COM MultiPage =====
-  // O MultiPage quebra automaticamente o conteúdo em várias páginas
-  pdf.addPage(
-    pw.MultiPage(
-      margin: pw.EdgeInsets.all(margin),
-      pageFormat: PdfPageFormat.a4,
-      build: (pw.Context context) {
-        return widgets;
-      },
-    ),
-  );
-
-  return await pdf.save();
-}
 
   /// Carrega imagem dos assets
   static Future<pw.MemoryImage?> _loadImage(String path) async {
-  try {
-    // Carregar a imagem como Uint8List
-    final ByteData byteData = await rootBundle.load(path);
-    final Uint8List bytes = byteData.buffer.asUint8List();
-    
-    // Criar uma nova instância de MemoryImage com cópia dos dados
-    // Isso evita problemas de cache
-    return pw.MemoryImage(Uint8List.fromList(bytes));
-  } catch (e) {
-    print('Erro ao carregar imagem: $path - $e');
-    return null;
+    try {
+      final ByteData byteData = await rootBundle.load(path);
+      final Uint8List bytes = byteData.buffer.asUint8List();
+      return pw.MemoryImage(Uint8List.fromList(bytes));
+    } catch (e) {
+      print('Erro ao carregar imagem: $path - $e');
+      return null;
+    }
   }
-}
 
   /// Constrói o cabeçalho com as logos lado a lado
   static pw.Widget _buildHeader(pw.MemoryImage? logoSecretaria, pw.MemoryImage? logoEquipe) {
@@ -170,7 +165,6 @@ class PdfService {
             height: 60,
             fit: pw.BoxFit.contain,
           ),
-        
         pw.Expanded(
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -185,7 +179,6 @@ class PdfService {
             ],
           ),
         ),
-        
         if (logoEquipe != null)
           pw.Image(
             logoEquipe,
@@ -217,15 +210,20 @@ class PdfService {
     );
   }
 
-  /// Informações da escola
-  static pw.Widget _buildEscolaInfo(Escola escola) {
+  /// Informações da escola (ocultar para Atividade externa)
+  static pw.Widget _buildEscolaInfo(Escola escola, String tipoAtividade) {
+    // Se for Atividade externa, não mostra informações da escola
+    if (tipoAtividade == "Atividade externa") {
+      return pw.SizedBox.shrink();
+    }
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
           'Escola: ${escola.nome}',
           style: pw.TextStyle(
-            fontSize: 12,
+            fontSize: fontSizeTitle,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -233,7 +231,7 @@ class PdfService {
         pw.Text(
           'Diretor(a): ${escola.diretor}',
           style: pw.TextStyle(
-            fontSize: 12,
+            fontSize: fontSizeTitle,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -241,7 +239,7 @@ class PdfService {
         pw.Text(
           'Município: $municipio',
           style: pw.TextStyle(
-            fontSize: 12,
+            fontSize: fontSizeTitle,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -251,12 +249,11 @@ class PdfService {
 
   /// Constrói os campos da atividade dentro de caixas
   static pw.Widget _buildCamposAtividade(Atividade atividade, Map<String, dynamic> dados) {
-    // Adicionar campos padrão
-    final Map<String, String> campos = {
-      'Tipo de Atividade': atividade.tipo,
-      'Data': _formatDate(atividade.data),
-      ...dados.map((key, value) => MapEntry(key, value.toString())),
-    };
+    final Map<String, String> campos = {};
+    
+    campos['Data'] = _formatDate(atividade.data);
+    campos['Tipo de Atividade'] = atividade.tipo;
+    campos.addAll(dados.map((key, value) => MapEntry(key, value.toString())));
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -309,13 +306,8 @@ class PdfService {
     required pw.MemoryImage? assinaturaMembro,
     required pw.MemoryImage? assinaturaResponsavel,
   }) {
-    // Nome do membro da equipe
     String nomeMembroEquipe = dados['membroEquipe'] ?? tecnico.nomeCompleto;
-    
-    // Cargo do membro da equipe
     String cargoMembroEquipe = tecnico.cargo;
-    
-    // Nome do responsável da escola
     String nomeResponsavel = atividade.nomeResponsavelAssinatura ?? 'Responsável não informado';
     String funcaoResponsavel = atividade.funcaoResponsavelAssinatura ?? '';
 
@@ -325,6 +317,29 @@ class PdfService {
         pw.SizedBox(height: 10),
         pw.Divider(thickness: 1),
         pw.SizedBox(height: 15),
+
+        // ===== TEXTO LGPD =====
+        if (atividade.tipo == "Protocolo de entrega de documento" || atividade.tipo == "Acolhimento psicológico") ...[
+          pw.Container(
+            padding: pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(
+                color: PdfColors.black,
+                width: 1,
+              ),
+              borderRadius: pw.BorderRadius.circular(4),
+            ),
+            child: pw.Text(
+              'As partes abaixo assinadas declaram, sob a pena da Lei, guardar o sigilo das informações contidas no encaminhamento protocolado por este documento, além de observar o disposto na LGPD. A pena para violação do sigilo das informações a que se refere este protocolo é de 6 meses a 6 anos de prisão mais multa (Art. 325 - Código Penal).',
+              style: pw.TextStyle(
+                fontSize: 10,
+                fontWeight: pw.FontWeight.normal,
+              ),
+              textAlign: pw.TextAlign.justify,
+            ),
+          ),
+          pw.SizedBox(height: 15),
+        ],
         
         // Título da seção
         pw.Center(
@@ -349,12 +364,8 @@ class PdfService {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  // Assinatura do membro da equipe (imagem)
                   _buildAssinaturaMembroWidget(assinaturaMembro),
-                  
                   pw.SizedBox(height: 8),
-                  
-                  // Nome do membro da equipe em caixa alta
                   pw.Text(
                     nomeMembroEquipe.toUpperCase(),
                     style: pw.TextStyle(
@@ -363,10 +374,7 @@ class PdfService {
                     ),
                     textAlign: pw.TextAlign.center,
                   ),
-                  
                   pw.SizedBox(height: 4),
-                  
-                  // Cargo do membro da equipe
                   pw.Text(
                     cargoMembroEquipe.isNotEmpty ? cargoMembroEquipe : 'Membro da Equipe',
                     style: pw.TextStyle(
@@ -381,17 +389,13 @@ class PdfService {
             
             pw.SizedBox(width: 30),
             
-            // Coluna 2: Responsável pela Escola
+            // Coluna 2: Responsável pela Escola ou Organizador
             pw.Expanded(
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  // Assinatura do responsável (capturada na tela)
                   _buildAssinaturaResponsavelWidget(assinaturaResponsavel),
-                  
                   pw.SizedBox(height: 8),
-                  
-                  // Nome do responsável em caixa alta
                   pw.Text(
                     nomeResponsavel.toUpperCase(),
                     style: pw.TextStyle(
@@ -400,11 +404,13 @@ class PdfService {
                     ),
                     textAlign: pw.TextAlign.center,
                   ),
-                  
                   pw.SizedBox(height: 4),
-                  
                   pw.Text(
-                    funcaoResponsavel.isNotEmpty ? funcaoResponsavel : 'Responsável pela Escola',
+                    atividade.tipo == "Atividade externa" 
+                        ? 'Organizador/Mediador' 
+                        : funcaoResponsavel.isNotEmpty 
+                            ? funcaoResponsavel 
+                            : 'Responsável pela Escola',
                     style: pw.TextStyle(
                       fontSize: 10,
                       color: PdfColors.grey,
@@ -566,9 +572,13 @@ class PdfService {
       tecnico: tecnico,
     );
     
+    final nomeArquivo = escola.nome == "Atividade Externa"
+        ? 'atividade_externa_${DateTime.now().millisecondsSinceEpoch}.pdf'
+        : 'atividade_${escola.nome.replaceAll(' ', '_')}.pdf';
+    
     await Printing.sharePdf(
       bytes: pdfBytes,
-      filename: 'atividade_${escola.nome.replaceAll(' ', '_')}.pdf',
+      filename: nomeArquivo,
     );
   }
 }

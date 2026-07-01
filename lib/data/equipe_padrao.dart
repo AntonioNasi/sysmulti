@@ -21,6 +21,12 @@ class EquipePadrao {
       cargo: "Psicóloga",
     ),
     Tecnico(
+      nome: "Claudio",
+      nomeCompleto: "Claudio Martins de Melo",
+      assinatura: "assets/assinaturas/claudio.png",
+      cargo: "Psicólogo",
+    ),
+    Tecnico(
       nome: "Mário",
       nomeCompleto: "ANTÔNIO MÁRIO M. V. LIMA",
       assinatura: "assets/assinaturas/mario.png",

@@ -78,19 +78,29 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
 
   Future<void> _gerarPDF(Atividade atividade) async {
   try {
-    final escola = await DatabaseHelper.instance.getEscolaById(
-      escolaSelecionada!.id!,
-    );
-
-    if (escola == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erro ao carregar dados para o PDF'),
-          backgroundColor: Colors.red,
-        ),
+    // ===== PARA ATIVIDADE EXTERNA, CRIAR UMA ESCOLA FICTÍCIA =====
+    Escola escola;
+    if (tipoSelecionado == "Atividade externa") {
+      escola = Escola(
+        id: 0,
+        nome: "Atividade Externa",
+        diretor: "Não se aplica",
       );
-      return;
+    } else {
+      final escolaBuscada = await DatabaseHelper.instance.getEscolaById(
+        escolaSelecionada!.id!,
+      );
+      if (escolaBuscada == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erro ao carregar dados da escola'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      escola = escolaBuscada;
     }
 
     // Criar um técnico temporário com os dados do membro da equipe
@@ -99,7 +109,7 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
       nome: membroEquipeSelecionado!.nome,
       nomeCompleto: membroEquipeSelecionado!.nomeCompleto,
       assinatura: membroEquipeSelecionado!.assinatura,
-      cargo: membroEquipeSelecionado!.cargo, // ADICIONAR CARGO
+      cargo: membroEquipeSelecionado!.cargo,
     );
 
     final pdfBytes = await PdfService.gerarPdfAtividade(
@@ -124,18 +134,19 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
 }
 
   Future<void> salvarAtividade() async {
-    // Validar formulário
-    if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Preencha todos os campos obrigatórios'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+  // Validar formulário
+  if (!_formKey.currentState!.validate()) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Preencha todos os campos obrigatórios'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return;
+  }
 
-    // Validações adicionais
+  // ===== VALIDAÇÃO DA ESCOLA (IGNORAR PARA ATIVIDADE EXTERNA) =====
+  if (tipoSelecionado != "Atividade externa") {
     if (escolaSelecionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -145,64 +156,83 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
       );
       return;
     }
+  }
 
-    if (membroEquipeSelecionado == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecione um membro da equipe'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+  // ===== VALIDAÇÃO DO MEMBRO DA EQUIPE =====
+  if (membroEquipeSelecionado == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Selecione um membro da equipe'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return;
+  }
 
-    if (tipoSelecionado == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecione o tipo de atividade'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+  // ===== VALIDAÇÃO DO TIPO DE ATIVIDADE =====
+  if (tipoSelecionado == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Selecione o tipo de atividade'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return;
+  }
 
-    if (nomeResponsavel.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Informe o nome do responsável'),
-          backgroundColor: Colors.orange,
+  // ===== VALIDAÇÃO DO NOME DO RESPONSÁVEL =====
+  if (nomeResponsavel.trim().isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+        content: Text(
+          tipoSelecionado == "Atividade externa" 
+              ? 'Informe o nome do responsável/mediador' 
+              : 'Informe o nome do responsável'
         ),
-      );
-      return;
-    }
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return;
+  }
 
-    if (assinaturaEscola == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Capture a assinatura do responsável'),
-          backgroundColor: Colors.orange,
+  // ===== VALIDAÇÃO DA ASSINATURA =====
+  if (assinaturaEscola == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+        content: Text(
+          tipoSelecionado == "Atividade externa" 
+              ? 'Capture a assinatura do organizador/mediador' 
+              : 'Capture a assinatura do responsável'
         ),
-      );
-      return;
-    }
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return;
+  }
 
     // Adicionar o membro da equipe aos dados
     dados['membroEquipe'] = membroEquipeSelecionado!.nomeCompleto;
     dados['membroEquipeAssinatura'] = membroEquipeSelecionado!.assinatura;
 
     final atividade = Atividade(
-      escolaId: escolaSelecionada!.id!,
-      tecnicoId: 0, // Não usamos mais técnico do banco
-      municipio: "Capistrano",
-      tipo: tipoSelecionado!,
-      data: DateTime.now().toIso8601String(),
-      dados: jsonEncode(dados),
-      assinaturaEscola: assinaturaEscola == null
-          ? null
-          : base64Encode(assinaturaEscola!),
-      nomeResponsavelAssinatura: nomeResponsavel,
-      funcaoResponsavelAssinatura: funcaoResponsavel,
-    );
+  escolaId: tipoSelecionado == "Atividade externa" 
+      ? 0  // ← ID 0 para atividade externa (sem escola)
+      : escolaSelecionada!.id!,
+  tecnicoId: 0,
+  municipio: tipoSelecionado == "Atividade externa" 
+      ? "Atividade externa"  // ← Sem município
+      : "Capistrano",
+  tipo: tipoSelecionado!,
+  data: DateTime.now().toIso8601String(),
+  dados: jsonEncode(dados),
+  assinaturaEscola: assinaturaEscola == null
+      ? null
+      : base64Encode(assinaturaEscola!),
+  nomeResponsavelAssinatura: nomeResponsavel,
+  funcaoResponsavelAssinatura: tipoSelecionado == "Atividade externa" 
+      ? "Organizador/Mediador" 
+      : funcaoResponsavel,
+);
 
     try {
       await DatabaseHelper.instance.inserirAtividade(atividade);
@@ -272,27 +302,54 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
     return const SizedBox.shrink();
   }
 
+  // ===== ADICIONA O VALOR AUTOMÁTICO AO MAP =====
+  // Verifica se é o tipo "Protocolo de entrega de documento"
+  if (tipoSelecionado == "Protocolo de entrega de documento") {
+    // Adiciona o nome do membro da equipe ao Map dados
+    if (membroEquipeSelecionado != null) {
+      dados['Responsável pela emissão'] = membroEquipeSelecionado!.nomeCompleto;
+    }
+  }
+
   return Column(
     children: campos.map<Widget>((campo) {
       final campoNome = campo.toString();
+      
+      // Verifica se é o campo automático
+      final isResponsavelEmissao = 
+          campoNome == "Responsável pela emissão" &&
+          tipoSelecionado == "Protocolo de entrega de documento";
+
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: TextFormField(
-          maxLines: null, // ← PERMITE MÚLTIPLAS LINHAS
-          minLines: 1,    // ← COMEÇA COM 1 LINHA
-          keyboardType: TextInputType.multiline, // ← HABILITA QUEBRA DE LINHA
-          textInputAction: TextInputAction.newline, // ← BOTÃO "ENTER" PARA QUEBRA
+          maxLines: null,
+          minLines: 1,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.newline,
           decoration: InputDecoration(
             labelText: campoNome,
             border: const OutlineInputBorder(),
-            // Opcional: adicionar um fundo para melhor visualização
             filled: true,
             fillColor: Colors.white,
+            hintText: isResponsavelEmissao ? 'Preenchido automaticamente' : null,
+            enabled: !isResponsavelEmissao,
           ),
+          controller: isResponsavelEmissao 
+              ? TextEditingController(
+                  text: membroEquipeSelecionado?.nomeCompleto ?? '',
+                )
+              : null,
           onChanged: (valor) {
-            dados[campoNome] = valor;
+            // Só salva se NÃO for o campo automático
+            if (!isResponsavelEmissao) {
+              dados[campoNome] = valor;
+            }
           },
           validator: (value) {
+            if (isResponsavelEmissao) {
+              return null;
+            }
             if (value == null || value.trim().isEmpty) {
               return 'Preencha o campo $campoNome';
             }
@@ -338,7 +395,7 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
                       child: Text(e.nome),
                     );
                   }).toList(),
-                  onChanged: (Escola? valor) {
+                  onChanged: tipoSelecionado == "Atividade externa" ? null : (Escola? valor) {
                     setState(() {
                       escolaSelecionada = valor;
                     });
@@ -413,21 +470,24 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
 
                 // Nome do responsável da escola
                 TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: "Nome do responsável da escola",
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tipoSelecionado == "Atividade externa" 
+                        ? "Responsável/Mediador" 
+                        : "Nome do responsável da escola",
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (valor) {
                     nomeResponsavel = valor;
                   },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Informe o nome do responsável';
+                      return tipoSelecionado == "Atividade externa" 
+                          ? 'Informe o nome do responsável/mediador' 
+                          : 'Informe o nome do responsável';
                     }
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 15),
 
                 // Dropdown: Função do responsável
@@ -439,6 +499,8 @@ class _NovaAtividadeScreenState extends State<NovaAtividadeScreen> {
                     "Coordenador pedagógico",
                     "Secretário",
                     "Professor",
+                    "Mediador",
+                    "Organizador",
                     "Outro"
                   ].map<DropdownMenuItem<String>>(
                     (String funcao) {
