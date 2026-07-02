@@ -13,27 +13,26 @@ class HomeScreen extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           child: Image.asset(
-            'assets/icon/app_icon.png',
+            'assets/icon/edumov_icon.png',
             width: 40,
             height: 40,
             fit: BoxFit.contain,
           ),
         ),
-        title: const Text('Equipe Multiprofissional - SME'),
+        title: const Text('EduMov - Educação em Movimento'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
       body: Container(
-        // ===== IMAGEM DE FUNDO =====
         decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/imagens/sme_foto.jpg'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.white.withOpacity(0.2), // ← Ajuste a opacidade (0.0 a 1.0)
-              BlendMode.dstATop, // Mantém a forma da imagem com transparência
-            ),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.blue.shade50,
+              Colors.white,
+            ],
           ),
         ),
         child: Column(
@@ -41,7 +40,6 @@ class HomeScreen extends StatelessWidget {
           children: [
             const Spacer(flex: 1),
             
-            // Botões
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -123,7 +121,6 @@ class HomeScreen extends StatelessWidget {
             
             const Spacer(flex: 1),
             
-            // ===== TEXTO "Desenvolvido por GXN Tecnologia" =====
             Padding(
               padding: const EdgeInsets.only(bottom: 20),
               child: Text(
